@@ -36,14 +36,14 @@ def verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, cat
     
     return estoque_total
 
-# Substitua 'caminho/para/seu/arquivo_vendas.xlsx' pelo caminho do seu arquivo de vendas Excel
+# Local do arquivo de vendas
 arquivo_vendas = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\aux_compras\\src\\vendas23.xlsx'
 
-# Substitua 'caminho/para/seu/arquivo_produtos.xlsx' pelo caminho do seu arquivo de produtos Excel
+# Local do arquivo de produtos
 arquivo_produtos = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\aux_compras\\src\\produtos.xlsx'
 
-# Solicitar ao usuário a marca desejada
-marca_escolhida = input("Digite a marca para ver a quantidade de vendas e estoque: ")
+# Escolha da marca
+marca_escolhida = input("Digite a marca para ver a quantidade de vendas e estoque: ").capitalize()
 
 # Listar as categorias disponíveis para a marca escolhida
 df_produtos = pd.read_excel(arquivo_produtos)
@@ -55,7 +55,7 @@ for categoria in categorias_disponiveis:
     print(categoria)
 
 # Solicitar ao usuário a categoria desejada
-categoria_escolhida = input("Digite a categoria para ver a quantidade de vendas (ou 'Todas' para todas as categorias): ")
+categoria_escolhida = str(input("Digite a categoria para ver a quantidade de vendas (ou 'Todas' para todas as categorias): ")).capitalize()
 
 # Solicitar ao usuário se deseja ver as vendas do ano todo ou definir um período específico
 opcao_periodo = input("Deseja ver as vendas do ano todo (A) ou definir um período específico (P)? ").upper()
@@ -76,22 +76,20 @@ if categoria_escolhida.lower() == 'todas':
         total_vendas = contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria, periodo)
         estoque_total = verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, categoria)
         quantidade_minima_comprar = int(total_vendas * (1 + projecao_crescimento / 100)) - estoque_total
+        vendas_projecao = total_vendas + int(total_vendas * projecao_crescimento / 100)
         if quantidade_minima_comprar < 0:
             quantidade_minima_comprar = 0
-        tabela_resultados.append([categoria, total_vendas, estoque_total, quantidade_minima_comprar])
+        tabela_resultados.append([categoria, total_vendas, estoque_total, vendas_projecao, quantidade_minima_comprar])
 
     # Imprimir tabela de resultados
-    print("\nCategoria | Total Vendas | Estoque | Quantidade Mínima para Comprar")
-    for linha in tabela_resultados:
-        print("{:<40} | {:<12} | {:<7} | {:<30}".format(*linha))
-else:
-    total_vendas = contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria_escolhida, periodo)
-    estoque_total = verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, categoria_escolhida)
-    projecao_crescimento = float(input(f"Digite a projeção de crescimento (%) para a categoria {categoria_escolhida}: "))
-    quantidade_minima_comprar = int(total_vendas * (1 + projecao_crescimento / 100)) - estoque_total
-    if quantidade_minima_comprar < 0:
-        quantidade_minima_comprar = 0
-    print(f"Total de vendas para a marca {marca_escolhida} na categoria {categoria_escolhida}: {total_vendas}")
-    print(f"Estoque disponível para a marca {marca_escolhida} na categoria {categoria_escolhida}: {estoque_total}")
-    print(f"Quantidade mínima de peças a comprar para atingir a projeção de vendas: {quantidade_minima_comprar}")
+print("\nCategoria                                        | Total Vendas 23 | Estoque Atual | Vendas com Projeção | Quantidade Mínima para Comprar")
+for linha in tabela_resultados:
+    print("{:<50} | {:<12} | {:<7} | {:<30} | {:<20}".format(*linha))
 
+# Perguntar ao usuário se deseja salvar os resultados em um arquivo Excel
+opcao_salvar_excel = input("Deseja salvar os resultados em um arquivo Excel? (S/N): ").upper()
+if opcao_salvar_excel == 'S':
+    nome_arquivo_excel = input("Digite o nome do arquivo Excel (incluindo .xlsx): ")
+    df_resultados = pd.DataFrame(tabela_resultados, columns=["Categoria", "Total Vendas", "Estoque", "Vendas com Projeção", "Quantidade Mínima para Comprar"])
+    df_resultados.to_excel(nome_arquivo_excel, index=False, engine='openpyxl')
+    print(f"Os resultados foram salvos no arquivo {nome_arquivo_excel}.")
