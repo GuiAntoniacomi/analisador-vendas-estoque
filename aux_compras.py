@@ -90,6 +90,6 @@ for linha in tabela_resultados:
 opcao_salvar_excel = input("Deseja salvar os resultados em um arquivo Excel? (S/N): ").upper()
 if opcao_salvar_excel == 'S':
     nome_arquivo_excel = input("Digite o nome do arquivo Excel (incluindo .xlsx): ")
-    df_resultados = pd.DataFrame(tabela_resultados, columns=["Categoria", "Total Vendas", "Estoque", "Vendas com Projeção", "Quantidade Mínima para Comprar"])
+    df_resultados = pd.DataFrame(tabela_resultados, columns=["Categoria", "Total Vendas 23", "Estoque Atual", "Vendas com Projeção", "Quantidade Mínima para Comprar"])
     df_resultados.to_excel(nome_arquivo_excel, index=False, engine='openpyxl')
     print(f"Os resultados foram salvos no arquivo {nome_arquivo_excel}.")
