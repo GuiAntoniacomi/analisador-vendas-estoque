@@ -1,18 +1,65 @@
 import pandas as pd
-# Local do arquivo de produtos
-arquivo_produtos = 'C:\\Users\\anton\\OneDrive\\Documents\\GitHub\\aux_compras\\src\\produtos.xlsx'
 
-# Escolha da marca
-marca_escolhida = input("Digite a marca para ver a quantidade de vendas e estoque: ").strip().capitalize()
+def obter_sku_filho(sku_pai, arquivo_excel):
+    df = pd.read_excel(arquivo_excel)
+    sku_filho = df[df['SKU Pai'] == sku_pai]['SKU Filho'].unique()
+    return sku_filho
 
-# Listar as categorias disponíveis para a marca escolhida
-df_produtos = pd.read_excel(arquivo_produtos)
-categorias_disponiveis = df_produtos[df_produtos['MARCA'] == marca_escolhida]['CATEGORIA'].unique()
+def contar_vendas_por_sku(sku, arquivo_excel):
+    df = pd.read_excel(arquivo_excel)
+    vendas_sku = df[df['SKU Filho'] == sku]
+    return vendas_sku.shape[0]
 
-marca_escolhida = input("Digite a marca para ver a quantidade de vendas e estoque: ").strip().capitalize()
-print(f"Marca escolhida: {marca_escolhida}")
+def data_primeira_venda(sku, arquivo_excel):
+    df = pd.read_excel(arquivo_excel)
+    vendas_sku = df[df['SKU Filho'] == sku]
+    if vendas_sku.empty:
+        return "Nenhuma venda encontrada para este SKU Filho."
+    primeira_venda = vendas_sku['Data'].min().strftime('%d/%m/%Y')
+    return primeira_venda
 
-print(f"Categorias disponíveis para a marca {marca_escolhida}:")
-print("Todas")
-for categoria in categorias_disponiveis:
-    print(categoria)
+def data_ultima_venda(sku, arquivo_excel):
+    df = pd.read_excel(arquivo_excel)
+    vendas_sku = df[df['SKU Filho'] == sku]
+    if vendas_sku.empty:
+        return "Nenhuma venda encontrada para este SKU Filho."
+    ultima_venda = vendas_sku['Data'].max().strftime('%d/%m/%Y')
+    return ultima_venda
+
+def calcular_duracao_vendas(sku, arquivo_excel):
+    df = pd.read_excel(arquivo_excel)
+    vendas_sku = df[df['SKU Filho'] == sku]
+    if vendas_sku.empty:
+        return "Nenhuma venda encontrada para este SKU Filho."
+    primeira_venda = vendas_sku['Data'].min()
+    ultima_venda = vendas_sku['Data'].max()
+    duracao_vendas = (ultima_venda - primeira_venda).days
+    return duracao_vendas
+    
+# Nome do arquivo Excel que contém as vendas
+arquivo_excel = 'src\\vendas23.xlsx'
+
+# SKU Pai que você deseja pesquisar
+sku_pai = int(input("Digite o SKU Pai que deseja pesquisar: "))
+
+# Obtém os SKU Filho do SKU Pai
+skus_filho = obter_sku_filho(sku_pai, arquivo_excel)
+
+# Loop para cada SKU Filho
+for sku_filho in skus_filho:
+    # Chama a função para calcular a duração das vendas do SKU Filho fornecido
+    duracao_vendas_sku_filho = calcular_duracao_vendas(sku_filho, arquivo_excel)
+
+    # Chama a função para contar as vendas do SKU Filho fornecido
+    total_vendas_sku_filho = contar_vendas_por_sku(sku_filho, arquivo_excel)
+
+    # Exibe o total de vendas do SKU Filho fornecido
+    print(f"Total de vendas do SKU Filho {sku_filho}: {total_vendas_sku_filho}")
+
+    # Exibe a duração das vendas do SKU Filho fornecido
+    if isinstance(duracao_vendas_sku_filho, int):
+        primeira_venda = data_primeira_venda(sku_filho, arquivo_excel)
+        ultima_venda = data_ultima_venda(sku_filho, arquivo_excel)
+        print(f"A primeira venda desse produto ocorreu em {primeira_venda} e a última em {ultima_venda}. Duração: {duracao_vendas_sku_filho} dias")
+    else:
+        print(duracao_vendas_sku_filho)

@@ -9,7 +9,12 @@ def contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria
     
     # Se uma categoria foi especificada, filtrar as vendas para essa categoria
     if categoria_escolhida is not None:
-        vendas_marca_escolhida = vendas_marca_escolhida[vendas_marca_escolhida['Categoria'] == categoria_escolhida]
+        # Verificar se a coluna 'Categoria' existe no DataFrame
+        if 'Categoria' in vendas_marca_escolhida.columns:
+            vendas_marca_escolhida = vendas_marca_escolhida[vendas_marca_escolhida['Categoria'] == categoria_escolhida]
+        else:
+            print("A coluna 'Categoria' não está presente no DataFrame de vendas.")
+            return 0  # Retorna 0 vendas se a coluna 'Categoria' não estiver presente
     
     # Se um período foi especificado, filtrar as vendas para esse período
     if periodo is not None:
@@ -29,7 +34,12 @@ def verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, cat
     
     # Se uma categoria foi especificada, filtrar os produtos para essa categoria
     if categoria_escolhida is not None:
-        produtos_marca_escolhida = produtos_marca_escolhida[df_produtos['CATEGORIA'] == categoria_escolhida]
+        # Verificar se a coluna 'Categoria' existe no DataFrame
+        if 'CATEGORIA' in produtos_marca_escolhida.columns:
+            produtos_marca_escolhida = produtos_marca_escolhida[produtos_marca_escolhida['CATEGORIA'] == categoria_escolhida]
+        else:
+            print("A coluna 'CATEGORIA' não está presente no DataFrame de produtos.")
+            return 0  # Retorna 0 estoque se a coluna 'CATEGORIA' não estiver presente
     
     # Calcular o estoque total para a marca escolhida e, se especificada, para a categoria escolhida
     estoque_total = produtos_marca_escolhida['ESTOQUE'].sum()
@@ -68,43 +78,24 @@ if opcao_periodo == 'P':
 else:
     periodo = None
 
-# Chamar as funções para calcular o número de vendas e o estoque disponível e imprimir os resultados
-if categoria_escolhida.lower() == 'todas':
-    tabela_resultados = []
-    projecao_crescimento = float(input("Digite a projeção de crescimento (%) para todas as categorias: ").strip())
-    for categoria in categorias_disponiveis:
-        total_vendas = contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria, periodo)
-        estoque_total = verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, categoria)
-        quantidade_minima_comprar = int(total_vendas * (1 + projecao_crescimento / 100)) - estoque_total
-        vendas_projecao = total_vendas + int(total_vendas * projecao_crescimento / 100)
-        if quantidade_minima_comprar < 0:
-            quantidade_minima_comprar = 0
-        tabela_resultados.append([categoria, total_vendas, estoque_total, vendas_projecao, quantidade_minima_comprar])
+# Chamar as funções para calcular o número de vendas e o estoque disponível
+tabela_resultados = []
+projecao_crescimento = float(input("Digite a projeção de crescimento (%) para todas as categorias: "))
+for categoria in categorias_disponiveis:
+    total_vendas = contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria, periodo)
+    estoque_total = verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, categoria)
+    quantidade_minima_comprar = int(total_vendas * (1 + projecao_crescimento / 100)) - estoque_total
+    vendas_projecao = total_vendas + int(total_vendas * projecao_crescimento / 100)
+    if quantidade_minima_comprar < 0:
+        quantidade_minima_comprar = 0
+    tabela_resultados.append([categoria, total_vendas, estoque_total, vendas_projecao, quantidade_minima_comprar])
 
-    # Imprimir tabela de resultados
-    print("\nCategoria                                        | Total Vendas 23 | Estoque Atual | Vendas com Projeção | Quantidade Mínima para Comprar")
+# Imprimir resultados apenas para a categoria selecionada
+print("\nCategoria                                        | Total Vendas 23 | Estoque Atual | Vendas com Projeção | Quantidade Mínima para Comprar")
+if categoria_escolhida.lower() == 'todas':
     for linha in tabela_resultados:
         print("{:<50} | {:<12} | {:<7} | {:<30} | {:<20}".format(*linha))
-
 else:
-    total_vendas = contar_vendas_por_marca_categoria(arquivo_vendas, marca_escolhida, categoria_escolhida, periodo)
-    estoque_total = verificar_estoque_por_marca_categoria(arquivo_produtos, marca_escolhida, categoria_escolhida)
-    projecao_crescimento = float(input("Digite a projeção de crescimento (%) para a categoria escolhida: ").strip())
-    vendas_projecao = total_vendas + int(total_vendas * projecao_crescimento / 100)
-    quantidade_minima_comprar = max(0, int(total_vendas * (1 + projecao_crescimento / 100)) - estoque_total)
-
-    # Imprimir tabela de resultados
-    print("\nCategoria                                        | Total Vendas 23 | Estoque Atual | Vendas com Projeção | Quantidade Mínima para Comprar")
-    print("{:<50} | {:<12} | {:<7} | {:<30} | {:<20}".format(categoria_escolhida, total_vendas, estoque_total, vendas_projecao, quantidade_minima_comprar))
-
-# Perguntar ao usuário se deseja salvar os resultados em um arquivo Excel
-opcao_salvar_excel = input("Deseja salvar os resultados em um arquivo Excel? (S/N): ").strip().upper()
-if opcao_salvar_excel == 'S':
-    if categoria_escolhida.lower() == 'todas':
-        nome_arquivo_excel = input("Digite o nome do arquivo Excel para salvar os resultados (incluindo .xlsx): ").strip()
-    else:
-        nome_arquivo_excel = f"{categoria_escolhida.lower().replace(' ', '_')}_{marca_escolhida.lower().replace(' ', '_')}.xlsx"
-
-    df_resultados = pd.DataFrame(tabela_resultados if categoria_escolhida.lower() == 'todas' else [[categoria_escolhida, total_vendas, estoque_total, vendas_projecao, quantidade_minima_comprar]], columns=["Categoria", "Total Vendas 23", "Estoque Atual", "Vendas com Projeção", "Quantidade Mínima para Comprar"])
-    df_resultados.to_excel(nome_arquivo_excel, index=False, engine='openpyxl')
-    print(f"Os resultados foram salvos no arquivo {nome_arquivo_excel}.")
+    for linha in tabela_resultados:
+        if linha[0].lower() == categoria_escolhida.lower():
+            print("{:<50} | {:<12} | {:<7} | {:<30} | {:<20}".format(*linha))
